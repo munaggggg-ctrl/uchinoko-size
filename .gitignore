@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+data/*.db
+build/
+.env
+
+# 認証情報。絶対にコミットしない
+.token
+.setup_secrets.py
+.bundle.tar.gz
