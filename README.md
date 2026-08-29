@@ -15,6 +15,11 @@
 | 第31項 AI大量記事サイトにしない | 校閲linter が出典と provenance のない記事の公開を止める |
 | 第34項 APIキーを直書きしない | すべて GitHub Secrets 経由 |
 
+## 収集状況
+
+3ブランド / 24サイズ行を投入済み（CALULU・IDOG&ICAT・VERY-PET）。
+進捗と次の候補は `data/brands_backlog.md` を参照。
+
 ## 実データで分かったこと（要注意）
 
 ブランドによってサイズ表の数値の意味が違う。
