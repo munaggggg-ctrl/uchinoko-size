@@ -13,12 +13,12 @@
 | `WP_URL` | `https://uchinoko-size.com` | 公開情報 |
 | `WP_USER` | WordPress の管理ユーザー名 | 準公開 |
 | `WP_APP_PASS` | WordPress のアプリケーションパスワード | **秘密**。管理画面からいつでも失効できる |
+| `GEMINI_API_KEY` | サイズ表の読み取り（画像入力を含む）。無料枠 | **秘密**。Google AI Studio で再発行可 |
 
 ## Phase 1 後半で追加
 
 | 名前 | 用途 |
 |---|---|
-| `GEMINI_API_KEY` | サイズ表の抽出・正規化（無料枠） |
 | `ANTHROPIC_API_KEY` | 記事下書き・週次レポート |
 | `GA4_PROPERTY_ID` / `GSC_CREDENTIALS` | 週次レポートの数値取得 |
 

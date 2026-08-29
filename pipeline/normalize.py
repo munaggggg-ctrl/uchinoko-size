@@ -25,13 +25,22 @@ GARMENT_ACTUAL = "garment_actual"    # 表の数値＝服の実寸
 
 # 服の実寸から犬の実測を引いた「ゆとり」の想定量 (cm)。
 #   dog ∈ [garment - loose, garment - tight]
-#   tight 側を小さくすると「きつくても入る」判定になるので、安全側に取る。
-# 伸縮性が高いほど、きつめでも着られるので tight 側を詰められる。
+#
+# 出典: milla milla「2-1.サイズについて【犬用】」（犬服の型紙販売元が公開する推奨あき量）
+#   https://www.millamilla.jp/first/サイズについて/  取得 2026-08-29
+#   小型犬（3S〜M、DS、DM）
+#     ニット生地   胴まわり 2〜3cm / 首まわり 2cm
+#     布帛(伸びない) 胴まわり 4〜5cm / 首まわり 2〜3cm
+#
+# 上記を stretch に対応づける:
+#   high = ニット / none = 布帛 / low = その両者の中間（当サイトの補間）
+# 首の high は公式値が2cmの一点なので、±0.5cmを当サイトの許容幅として与えている。
 EASE: dict[str, dict[str, tuple[float, float]]] = {
-    #                    (tight, loose)
-    "chest": {"none": (2.0, 7.0), "low": (1.5, 6.0), "high": (0.5, 5.0)},
-    "neck":  {"none": (1.5, 6.0), "low": (1.0, 5.0), "high": (0.0, 4.5)},
-    # 着丈は「ゆとり」ではなく合わせる寸法。服の着丈≒犬の背丈でよい
+    #                    (tight, loose) = (最小あき, 最大あき)
+    "chest": {"none": (4.0, 5.0), "low": (3.0, 4.0), "high": (2.0, 3.0)},
+    "neck":  {"none": (2.0, 3.0), "low": (2.0, 2.5), "high": (1.5, 2.5)},
+    # 着丈のあき量は milla milla にも数値の記載がない。
+    # 服の着丈≒犬の背丈として、前後1.5〜2.0cmを当サイトの許容幅として置く（推定）。
     "back":  {"none": (-1.5, 1.5), "low": (-1.5, 1.5), "high": (-2.0, 2.0)},
 }
 
@@ -39,11 +48,11 @@ EASE: dict[str, dict[str, tuple[float, float]]] = {
 CONVERSION_CONFIDENCE = 0.6
 
 CONVERSION_NOTE = (
-    "服の実寸表記を犬の適合レンジへ変換。"
-    "dog ∈ [実寸 - loose, 実寸 - tight]、ゆとり量は伸縮性別に "
-    "胴回り none(2.0,7.0)/low(1.5,6.0)/high(0.5,5.0)、"
-    "首回り none(1.5,6.0)/low(1.0,5.0)/high(0.0,4.5)、"
-    "着丈 ±1.5〜2.0cm。confidence=0.6"
+    "服の実寸表記を犬の適合レンジへ変換。dog ∈ [実寸 - 最大あき, 実寸 - 最小あき]。"
+    "あき量は milla milla の公開推奨値（小型犬: ニット 胴2〜3cm・首2cm / "
+    "布帛 胴4〜5cm・首2〜3cm、https://www.millamilla.jp/first/サイズについて/ ）に基づく。"
+    "伸縮性 low は当サイトによる中間補間、着丈のあき量は公式値が無いため当サイトの推定。"
+    "confidence=0.6"
 )
 
 

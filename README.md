@@ -20,6 +20,11 @@
 3ブランド / 24サイズ行を投入済み（CALULU・IDOG&ICAT・VERY-PET）。
 進捗と次の候補は `data/brands_backlog.md` を参照。
 
+サイズ表を**画像**で掲載しているブランドが相当数あるため、`pipeline/collect.py` は
+画像入力に対応している。抽出結果は必ず `validate()` を通し、
+**measure_basis の根拠となる公式ページの原文引用が取れていない抽出は破棄する**。
+推測で保存しないことをコードで強制している。
+
 ## 実データで分かったこと（要注意）
 
 ブランドによってサイズ表の数値の意味が違う。
@@ -40,6 +45,7 @@
 db/schema.sql          サイズDB。SQLite。Gitで差分が追える
 pipeline/sizing.py     適合判定エンジン（純粋関数。DBもHTTPも触らない）
 pipeline/normalize.py  サイズ表の正規化。実寸表記を犬の適合レンジへ変換する
+pipeline/collect.py    公式サイズ表の読み取り（画像入力対応）。検証を通らない抽出は保存しない
 pipeline/query.py      DB読み出し。SQLに触るのはここだけ
 pipeline/rakuten.py    楽天APIクライアント。購入リンクと価格のみ取得する
 pipeline/lint.py       公開前の校閲。ERROR があれば公開を止める
@@ -50,7 +56,7 @@ tests/run.py           テストランナー（pytest不要）
 ## 動かす
 
 ```bash
-python3 tests/run.py              # 80件のテスト
+python3 tests/run.py              # 111件のテスト
 python3 -m pipeline.lint FILE     # 校閲。終了コード1で公開中止
 ```
 

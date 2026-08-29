@@ -33,7 +33,31 @@ def test_stretch_is_not_applied_twice():
 def test_single_value_chart_expands_to_a_range():
     lo, hi = garment_to_dog_range("chest", 35.0, 35.0, "low")
     assert lo < hi, "単一値の表でも犬側はレンジになる"
-    assert (lo, hi) == (29.0, 33.5)
+    assert (lo, hi) == (31.0, 32.0)
+
+
+def test_ease_matches_the_cited_source():
+    """あき量は milla milla の公開推奨値に基づく。
+    小型犬 ニット: 胴2〜3cm・首2cm / 布帛: 胴4〜5cm・首2〜3cm。
+    ここを勝手に緩めると、推定レンジが実態から離れる。"""
+    from pipeline.normalize import EASE
+    assert EASE["chest"]["high"] == (2.0, 3.0), "ニットの胴あき 2〜3cm"
+    assert EASE["chest"]["none"] == (4.0, 5.0), "布帛の胴あき 4〜5cm"
+    assert EASE["neck"]["none"] == (2.0, 3.0), "布帛の首あき 2〜3cm"
+    # low は公式値の無い中間補間。none と high の間に収まっていること
+    for dim in ("chest", "neck"):
+        t_hi, l_hi = EASE[dim]["high"]
+        t_lo, l_lo = EASE[dim]["low"]
+        t_no, l_no = EASE[dim]["none"]
+        assert t_hi <= t_lo <= t_no and l_hi <= l_lo <= l_no, dim
+
+
+def test_knit_allows_a_larger_dog_than_woven():
+    """同じ実寸でも、ニットの方が大きい犬まで着られる。"""
+    _, hi_knit  = garment_to_dog_range("chest", 35.0, 35.0, "high")
+    _, hi_woven = garment_to_dog_range("chest", 35.0, 35.0, "none")
+    assert hi_knit > hi_woven
+    assert hi_knit == 33.0 and hi_woven == 31.0
 
 
 def test_dog_range_is_below_the_garment_measurement():
