@@ -72,3 +72,30 @@ IDOG&ICAT の S（実寸 胴35cm・伸縮low）が対応する犬の胴回り:
 
 判定が明確に保守的になった。首23cmのチワワに対する IDOG&ICAT S は
 ○81% から △66% に下がり、実態に近い答えになっている。
+
+## 楽天API 403 の原因と対処（2026-08-30 解決）
+
+GitHub Actions の selftest が4回連続で失敗していた。ブラウザから同じURLを直接叩いて
+原因を特定した。
+
+```
+{"errors":{"errorCode":403,
+ "errorMessage":"REQUEST_CONTEXT_BODY_HTTP_REFERRER_MISSING"}}
+```
+
+楽天APIは **Referer ヘッダ** を見て、アプリ登録時の Allowed websites と照合する。
+サーバー側から呼ぶ場合も Referer を明示的に付ける必要がある。付けないと全滅する。
+
+`pipeline/rakuten.py` で `Referer: https://uchinoko-size.com/` を送るよう修正。
+`WP_URL` から取り、環境変数 `RAKUTEN_REFERER` で上書きできる。
+`tests/test_rakuten.py` に回帰テストを追加（Referer を落とすと落ちる）。
+
+### 実データで検証済み
+
+Referer を付けて呼ぶと 200 が返り、`affiliateUrl` も正しく含まれている。
+
+- 「犬服 小型犬」 115,086件
+- 「犬 ハーネス 小型犬」 上位3件すべて `https://hb.afl.rakuten.co.jp/hgc/...` を取得
+  （7,250円/レビュー237、3,980円/レビュー1,468、4,980円/レビュー1,033）
+
+**収益導線は技術的に成立することを確認した。**

@@ -1,0 +1,531 @@
+{
+ "charts": [
+  {
+   "brand": "CALULU",
+   "slug": "calulu",
+   "measure_basis": "dog_fit_range",
+   "stretch": "low",
+   "source_url": "https://www.calulu-dogwear.jp/user_data/dogwearsize",
+   "fetched_at": "2026-08-29",
+   "sizes": [
+    {
+     "label": "3XS",
+     "order": 1,
+     "neck": [
+      14.0,
+      16.0
+     ],
+     "chest": [
+      22.0,
+      24.0
+     ],
+     "back": [
+      14.0,
+      16.0
+     ],
+     "weight": [
+      0.5,
+      1.0
+     ]
+    },
+    {
+     "label": "2XS",
+     "order": 2,
+     "neck": [
+      16.0,
+      18.0
+     ],
+     "chest": [
+      25.0,
+      27.0
+     ],
+     "back": [
+      15.0,
+      17.0
+     ],
+     "weight": [
+      1.0,
+      1.8
+     ]
+    },
+    {
+     "label": "XS",
+     "order": 3,
+     "neck": [
+      18.0,
+      20.0
+     ],
+     "chest": [
+      28.0,
+      30.0
+     ],
+     "back": [
+      18.0,
+      20.0
+     ],
+     "weight": [
+      1.8,
+      2.3
+     ]
+    },
+    {
+     "label": "S",
+     "order": 4,
+     "neck": [
+      21.0,
+      23.0
+     ],
+     "chest": [
+      31.0,
+      34.0
+     ],
+     "back": [
+      21.0,
+      23.0
+     ],
+     "weight": [
+      2.2,
+      2.8
+     ]
+    },
+    {
+     "label": "M",
+     "order": 5,
+     "neck": [
+      24.0,
+      27.0
+     ],
+     "chest": [
+      35.0,
+      38.0
+     ],
+     "back": [
+      24.0,
+      26.0
+     ],
+     "weight": [
+      2.8,
+      3.8
+     ]
+    },
+    {
+     "label": "L",
+     "order": 6,
+     "neck": [
+      27.0,
+      30.0
+     ],
+     "chest": [
+      39.0,
+      42.0
+     ],
+     "back": [
+      27.0,
+      29.0
+     ],
+     "weight": [
+      3.6,
+      5.3
+     ]
+    },
+    {
+     "label": "2L",
+     "order": 7,
+     "neck": [
+      31.0,
+      34.0
+     ],
+     "chest": [
+      43.0,
+      46.0
+     ],
+     "back": [
+      30.0,
+      32.0
+     ],
+     "weight": [
+      5.0,
+      7.0
+     ]
+    },
+    {
+     "label": "3L",
+     "order": 8,
+     "neck": [
+      33.0,
+      36.0
+     ],
+     "chest": [
+      47.0,
+      52.0
+     ],
+     "back": [
+      34.0,
+      36.0
+     ],
+     "weight": [
+      7.0,
+      9.0
+     ]
+    }
+   ]
+  },
+  {
+   "brand": "IDOG&ICAT",
+   "slug": "idog",
+   "measure_basis": "garment_actual",
+   "stretch": "low",
+   "source_url": "https://www.idog.jp/blog/sizepage/",
+   "fetched_at": "2026-08-29",
+   "sizes": [
+    {
+     "label": "XXS",
+     "order": 1,
+     "neck": [
+      18.0,
+      18.0
+     ],
+     "chest": [
+      27.0,
+      27.0
+     ],
+     "back": [
+      18.0,
+      18.0
+     ],
+     "weight": [
+      null,
+      1.0
+     ]
+    },
+    {
+     "label": "XS",
+     "order": 2,
+     "neck": [
+      20.0,
+      20.0
+     ],
+     "chest": [
+      31.0,
+      31.0
+     ],
+     "back": [
+      20.0,
+      20.0
+     ],
+     "weight": [
+      1.5,
+      1.8
+     ]
+    },
+    {
+     "label": "S",
+     "order": 3,
+     "neck": [
+      23.0,
+      23.0
+     ],
+     "chest": [
+      35.0,
+      35.0
+     ],
+     "back": [
+      23.0,
+      23.0
+     ],
+     "weight": [
+      1.6,
+      2.5
+     ]
+    },
+    {
+     "label": "M",
+     "order": 4,
+     "neck": [
+      26.0,
+      26.0
+     ],
+     "chest": [
+      40.0,
+      40.0
+     ],
+     "back": [
+      27.0,
+      27.0
+     ],
+     "weight": [
+      2.0,
+      3.5
+     ]
+    },
+    {
+     "label": "L",
+     "order": 5,
+     "neck": [
+      30.0,
+      30.0
+     ],
+     "chest": [
+      45.0,
+      45.0
+     ],
+     "back": [
+      31.0,
+      31.0
+     ],
+     "weight": [
+      2.5,
+      5.0
+     ]
+    },
+    {
+     "label": "XL",
+     "order": 6,
+     "neck": [
+      34.0,
+      34.0
+     ],
+     "chest": [
+      50.0,
+      50.0
+     ],
+     "back": [
+      35.0,
+      35.0
+     ],
+     "weight": [
+      5.0,
+      8.0
+     ]
+    },
+    {
+     "label": "DS",
+     "order": 7,
+     "neck": [
+      24.0,
+      24.0
+     ],
+     "chest": [
+      38.0,
+      38.0
+     ],
+     "back": [
+      31.0,
+      31.0
+     ],
+     "weight": [
+      3.0,
+      4.0
+     ]
+    },
+    {
+     "label": "DM",
+     "order": 8,
+     "neck": [
+      28.0,
+      28.0
+     ],
+     "chest": [
+      42.0,
+      42.0
+     ],
+     "back": [
+      34.0,
+      34.0
+     ],
+     "weight": [
+      5.0,
+      5.5
+     ]
+    },
+    {
+     "label": "DL",
+     "order": 9,
+     "neck": [
+      32.0,
+      32.0
+     ],
+     "chest": [
+      46.0,
+      46.0
+     ],
+     "back": [
+      37.0,
+      37.0
+     ],
+     "weight": [
+      6.0,
+      7.0
+     ]
+    }
+   ]
+  },
+  {
+   "brand": "VERY-PET",
+   "slug": "very-pet",
+   "measure_basis": "dog_fit_range",
+   "stretch": "low",
+   "source_url": "https://very-pet.com/pages/size",
+   "fetched_at": "2026-08-29",
+   "sizes": [
+    {
+     "label": "New 1",
+     "order": 1,
+     "neck": [
+      18.0,
+      24.5
+     ],
+     "chest": [
+      28.5,
+      33.5
+     ],
+     "back": [
+      19.5,
+      23.5
+     ],
+     "weight": [
+      1.5,
+      2.5
+     ]
+    },
+    {
+     "label": "New 2",
+     "order": 2,
+     "neck": [
+      20.0,
+      27.0
+     ],
+     "chest": [
+      33.0,
+      38.0
+     ],
+     "back": [
+      22.5,
+      26.5
+     ],
+     "weight": [
+      2.0,
+      3.5
+     ]
+    },
+    {
+     "label": "New 3",
+     "order": 3,
+     "neck": [
+      22.0,
+      29.0
+     ],
+     "chest": [
+      37.0,
+      42.0
+     ],
+     "back": [
+      25.5,
+      29.5
+     ],
+     "weight": [
+      3.0,
+      5.5
+     ]
+    },
+    {
+     "label": "New 4",
+     "order": 4,
+     "neck": [
+      24.0,
+      31.0
+     ],
+     "chest": [
+      41.5,
+      46.5
+     ],
+     "back": [
+      28.5,
+      32.5
+     ],
+     "weight": [
+      4.0,
+      7.0
+     ]
+    },
+    {
+     "label": "New 5",
+     "order": 5,
+     "neck": [
+      26.0,
+      33.0
+     ],
+     "chest": [
+      46.0,
+      51.0
+     ],
+     "back": [
+      31.5,
+      35.5
+     ],
+     "weight": [
+      5.0,
+      8.0
+     ]
+    },
+    {
+     "label": "New 6",
+     "order": 6,
+     "neck": [
+      28.0,
+      35.0
+     ],
+     "chest": [
+      49.5,
+      55.5
+     ],
+     "back": [
+      34.5,
+      38.5
+     ],
+     "weight": [
+      6.5,
+      9.0
+     ]
+    },
+    {
+     "label": "New 7",
+     "order": 7,
+     "neck": [
+      30.0,
+      37.0
+     ],
+     "chest": [
+      54.0,
+      60.0
+     ],
+     "back": [
+      37.5,
+      41.5
+     ],
+     "weight": [
+      7.5,
+      11.0
+     ]
+    }
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "url": "https://www.calulu-dogwear.jp/user_data/dogwearsize",
+   "title": "CALULU 犬服のサイズについて",
+   "note": "原文: 「当サイトに掲載のサイズ表は、ワンちゃんのボディサイズです。(服のサイズではありません。)」→ dog_fit_range"
+  },
+  {
+   "url": "https://www.idog.jp/blog/sizepage/",
+   "title": "IDOG&ICAT お洋服のサイズについて",
+   "note": "原文: 「サイズ表の数字は全てお洋服の仕上り寸法となっております。」→ garment_actual"
+  },
+  {
+   "url": "https://very-pet.com/pages/size",
+   "title": "VERY-PET 犬服のサイズ表",
+   "note": "原文: 「サイズ表はワンちゃんのボディサイズの目安です。洋服のサイズではありません。」→ dog_fit_range"
+  }
+ ]
+}

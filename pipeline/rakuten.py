@@ -13,6 +13,11 @@
 認証情報:
   RAKUTEN_APP_ID / RAKUTEN_ACCESS_KEY / RAKUTEN_AFFILIATE_ID を環境変数から読む。
   コードにもリポジトリにも書かない（引継書 第34項）。
+
+Referer が必須:
+  楽天APIは Referer ヘッダを見て、アプリ登録時の Allowed websites と照合する。
+  付けないと 403 REQUEST_CONTEXT_BODY_HTTP_REFERRER_MISSING で全リクエストが落ちる。
+  登録値は uchinoko-size.com / *.uchinoko-size.com なので、そのURLを送る。
 """
 
 from __future__ import annotations
@@ -31,6 +36,7 @@ MIN_INTERVAL_SEC = 1.0      # 申告QPS=1 を守る
 MAX_RETRIES = 3             # 第30項: リトライ上限
 BACKOFF_BASE_SEC = 2.0
 DEFAULT_DAILY_CAP = 1000    # 第30項: 1日の上限。超えたら止まる
+DEFAULT_REFERER = "https://uchinoko-size.com/"
 
 
 class RakutenError(RuntimeError):
@@ -60,8 +66,12 @@ class Item:
         return bool(self.affiliate_url) and self.price > 0
 
 
-def _default_fetch(url: str, timeout: float = 15.0) -> tuple[int, str]:
-    req = urllib.request.Request(url, headers={"User-Agent": "uchinoko-size/1.0"})
+def _default_fetch(url: str, referer: str = DEFAULT_REFERER,
+                   timeout: float = 15.0) -> tuple[int, str]:
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "uchinoko-size/1.0",
+        "Referer": referer,          # 楽天APIの必須ヘッダ
+    })
     try:
         with urllib.request.urlopen(req, timeout=timeout) as res:
             return res.status, res.read().decode("utf-8")
@@ -74,13 +84,19 @@ class RakutenClient:
                  app_id: Optional[str] = None,
                  access_key: Optional[str] = None,
                  affiliate_id: Optional[str] = None,
-                 fetch: Callable[[str], tuple[int, str]] = _default_fetch,
+                 referer: Optional[str] = None,
+                 fetch: Callable[..., tuple[int, str]] = _default_fetch,
                  daily_cap: int = DEFAULT_DAILY_CAP,
                  sleep: Callable[[float], None] = time.sleep,
                  clock: Callable[[], float] = time.monotonic):
         self.app_id = app_id or os.environ.get("RAKUTEN_APP_ID", "")
         self.access_key = access_key or os.environ.get("RAKUTEN_ACCESS_KEY", "")
         self.affiliate_id = affiliate_id or os.environ.get("RAKUTEN_AFFILIATE_ID", "")
+        # Allowed websites に登録したドメインと一致している必要がある
+        self.referer = (referer
+                        or os.environ.get("RAKUTEN_REFERER")
+                        or os.environ.get("WP_URL")
+                        or DEFAULT_REFERER)
         if not self.app_id or not self.access_key:
             raise RakutenError(
                 "RAKUTEN_APP_ID と RAKUTEN_ACCESS_KEY が設定されていません。"
@@ -124,7 +140,7 @@ class RakutenClient:
 
         for attempt in range(MAX_RETRIES):
             self._throttle()
-            status, body = self._fetch(url)
+            status, body = self._fetch(url, self.referer)
             self._last_call_at = self._clock()
             self.calls += 1
 

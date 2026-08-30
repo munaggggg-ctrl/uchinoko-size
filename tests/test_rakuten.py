@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from pipeline.rakuten import (  # noqa: E402
-    MAX_RETRIES, QuotaExceeded, RakutenClient, RakutenError,
+    DEFAULT_REFERER, MAX_RETRIES, QuotaExceeded, RakutenClient, RakutenError,
 )
 
 CREDS = dict(app_id="app-123", access_key="pk_test", affiliate_id="aa.bb.cc.dd")
@@ -33,9 +33,11 @@ class Recorder:
     def __init__(self, *responses):
         self.responses = list(responses)
         self.urls = []
+        self.referers = []
 
-    def __call__(self, url, timeout=15.0):
+    def __call__(self, url, referer=None, timeout=15.0):
         self.urls.append(url)
+        self.referers.append(referer)
         return self.responses.pop(0) if self.responses else (200, body())
 
 
@@ -188,3 +190,40 @@ def test_malformed_json_is_reported_clearly():
         assert "JSON" in str(e)
     else:
         raise AssertionError("壊れたレスポンスを黙って通してはいけない")
+
+
+# --- Referer（2026-08-30 に判明した必須ヘッダ）--------------------------
+
+def test_referer_is_sent():
+    """楽天APIは Referer を見てアプリ登録の Allowed websites と照合する。
+    付け忘れると 403 REQUEST_CONTEXT_BODY_HTTP_REFERRER_MISSING で全滅する。"""
+    f = Recorder((200, body(ITEM)))
+    client(f).search("犬服")
+    assert f.referers[0] == DEFAULT_REFERER
+
+
+def test_referer_can_be_overridden():
+    f = Recorder((200, body(ITEM)))
+    RakutenClient(**CREDS, referer="https://example.com/", fetch=f,
+                  sleep=lambda s: None).search("犬服")
+    assert f.referers[0] == "https://example.com/"
+
+
+def test_referer_falls_back_to_site_url(monkeypatch=None):
+    import os
+    old = os.environ.get("WP_URL")
+    os.environ["WP_URL"] = "https://uchinoko-size.com"
+    try:
+        f = Recorder((200, body(ITEM)))
+        RakutenClient(**CREDS, fetch=f, sleep=lambda s: None).search("犬服")
+        assert f.referers[0] == "https://uchinoko-size.com"
+    finally:
+        if old is None:
+            os.environ.pop("WP_URL", None)
+        else:
+            os.environ["WP_URL"] = old
+
+
+def test_default_referer_matches_the_registered_domain():
+    """アプリ登録の Allowed websites は uchinoko-size.com。ここがずれると403になる。"""
+    assert "uchinoko-size.com" in DEFAULT_REFERER
