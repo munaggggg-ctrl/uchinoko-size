@@ -13,6 +13,8 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # data/ の差分をコミットして戻すため
     timeout-minutes: 20         # 暴走時の上限
     steps:
       - uses: actions/checkout@v4

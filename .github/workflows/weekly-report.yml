@@ -15,10 +15,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      # レポート生成はまだ実装していない（GA4/Search Console の接続待ち）。
+      # 未実装のうちは黙ってスキップする。毎週日曜の朝に赤い失敗通知が出るのを避けるため。
       - name: 週次レポート生成
+        if: hashFiles('pipeline/weekly_report.py') != ''
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GA4_PROPERTY_ID:   ${{ secrets.GA4_PROPERTY_ID }}
           GSC_CREDENTIALS:   ${{ secrets.GSC_CREDENTIALS }}
           RAKUTEN_APP_ID:    ${{ secrets.RAKUTEN_APP_ID }}
         run: python3 -m pipeline.weekly_report
+
+      - name: 未実装の告知
+        if: hashFiles('pipeline/weekly_report.py') == ''
+        run: echo "週次レポートは未実装のためスキップしました。"
