@@ -93,10 +93,12 @@ class RakutenClient:
         self.access_key = access_key or os.environ.get("RAKUTEN_ACCESS_KEY", "")
         self.affiliate_id = affiliate_id or os.environ.get("RAKUTEN_AFFILIATE_ID", "")
         # Allowed websites に登録したドメインと一致している必要がある
-        self.referer = (referer
-                        or os.environ.get("RAKUTEN_REFERER")
-                        or os.environ.get("WP_URL")
-                        or DEFAULT_REFERER)
+        raw = (referer
+               or os.environ.get("RAKUTEN_REFERER")
+               or os.environ.get("WP_URL")
+               or DEFAULT_REFERER)
+        # ブラウザは必ずパス付きのURLを送る。末尾スラッシュを補って同じ形にそろえる
+        self.referer = raw if raw.rstrip("/") != raw else raw + "/"
         if not self.app_id or not self.access_key:
             raise RakutenError(
                 "RAKUTEN_APP_ID と RAKUTEN_ACCESS_KEY が設定されていません。"

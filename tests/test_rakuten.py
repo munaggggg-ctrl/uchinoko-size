@@ -209,6 +209,15 @@ def test_referer_can_be_overridden():
     assert f.referers[0] == "https://example.com/"
 
 
+def test_referer_always_ends_with_a_path():
+    """楽天が受け付けたのはブラウザが送る形（末尾スラッシュ付き）だった。
+    スラッシュなしで送ると 403 REQUEST_CONTEXT_BODY_HTTP_REFERRER_MISSING になる可能性がある。"""
+    f = Recorder((200, body(ITEM)))
+    RakutenClient(**CREDS, referer="https://example.com", fetch=f,
+                  sleep=lambda s: None).search("犬服")
+    assert f.referers[0] == "https://example.com/"
+
+
 def test_referer_falls_back_to_site_url(monkeypatch=None):
     import os
     old = os.environ.get("WP_URL")
@@ -216,7 +225,8 @@ def test_referer_falls_back_to_site_url(monkeypatch=None):
     try:
         f = Recorder((200, body(ITEM)))
         RakutenClient(**CREDS, fetch=f, sleep=lambda s: None).search("犬服")
-        assert f.referers[0] == "https://uchinoko-size.com"
+        # 末尾スラッシュは補われる（ブラウザが送る形にそろえるため）
+        assert f.referers[0] == "https://uchinoko-size.com/"
     finally:
         if old is None:
             os.environ.pop("WP_URL", None)
