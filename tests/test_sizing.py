@@ -196,3 +196,30 @@ def test_provenance_is_carried_through():
                 {"chest": (30, 34)})
     f = evaluate(Dog(chest=32), v)
     assert f.provenance == "estimated", "推定値であることが出力まで残る"
+
+
+# --- 測れていない寸法があるときの慎重さ ------------------------------
+
+def test_weight_only_is_never_called_a_perfect_fit():
+    """体重しか分からない飼い主は多い。だが体重だけで『ぴったり』と断定すると、
+    胴長犬や毛量の多い犬で外れる。断定しないことを実装で保証する。"""
+    v = wear("M", 1, (None, None), (None, None), (None, None), weight=(2.8, 3.8))
+    f = evaluate(Dog(weight=3.0), v)
+    assert f.low_coverage is True
+    assert f.verdict != JUST, "胴回りが未計測なら◎は出さない"
+    assert f.score <= 0.89
+
+
+def test_chest_measured_allows_a_perfect_fit():
+    v = wear("S", 1, (21, 23), (31, 34), (21, 23), weight=(2.2, 2.8))
+    f = evaluate(Dog(neck=23, chest=32, back=24, weight=2.8), v)
+    assert f.low_coverage is False
+
+
+def test_low_coverage_still_ranks_brands():
+    """断定はしないが、順位は付ける。体重だけでも比較の役には立つ。"""
+    near = evaluate(Dog(weight=3.0),
+                    wear("M", 1, (None,None), (None,None), (None,None), weight=(2.8, 3.8)))
+    far = evaluate(Dog(weight=3.0),
+                   wear("XL", 2, (None,None), (None,None), (None,None), weight=(7.0, 9.0)))
+    assert near.score > far.score

@@ -93,6 +93,9 @@ class Fit:
     dims: tuple[DimResult, ...]
     covered_weight: float            # 判定に使えた寸法の重み合計
     provenance: str
+    # 支配的な寸法（犬服なら胴回り）の実測が無いまま出した判定かどうか。
+    # 体重だけで「ぴったり」と断定すると外れるので、この場合は上限を設ける。
+    low_coverage: bool = False
 
     @property
     def mark(self) -> str:
@@ -194,6 +197,12 @@ def evaluate(dog: Dog, variant: Variant) -> Optional[Fit]:
         if r.dim == dominant and r.direction != "in" and r.score < 0.5:
             score = min(score, 0.45)
 
+    # 支配的な寸法が測れていない場合は「ぴったり」と断定しない。
+    # 体重だけの判定は、胴長犬や毛量の多い犬で外れる。
+    low_coverage = not any(r.dim == dominant for r in results)
+    if low_coverage:
+        score = min(score, 0.89)
+
     verdict = (JUST if score >= 0.90 else
                FITS if score >= 0.75 else
                CHECK if score >= 0.55 else
@@ -206,6 +215,7 @@ def evaluate(dog: Dog, variant: Variant) -> Optional[Fit]:
         dims=tuple(results),
         covered_weight=round(total_w, 4),
         provenance=variant.provenance,
+        low_coverage=low_coverage,
     )
 
 
