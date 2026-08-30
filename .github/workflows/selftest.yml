@@ -20,14 +20,6 @@ jobs:
       - name: テスト
         run: python3 tests/run.py
 
-      - name: 楽天API 診断（原因切り分け用・一時的）
-        continue-on-error: true
-        env:
-          RAKUTEN_APP_ID:       ${{ secrets.RAKUTEN_APP_ID }}
-          RAKUTEN_ACCESS_KEY:   ${{ secrets.RAKUTEN_ACCESS_KEY }}
-          RAKUTEN_AFFILIATE_ID: ${{ secrets.RAKUTEN_AFFILIATE_ID }}
-        run: python3 tools/diag_rakuten.py
-
       - name: 楽天APIの疎通確認
         env:
           RAKUTEN_APP_ID:       ${{ secrets.RAKUTEN_APP_ID }}

@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from pipeline.rakuten import (  # noqa: E402
     DEFAULT_REFERER, MAX_RETRIES, QuotaExceeded, RakutenClient, RakutenError,
+    _default_fetch, _origin_of,
 )
 
 CREDS = dict(app_id="app-123", access_key="pk_test", affiliate_id="aa.bb.cc.dd")
@@ -237,3 +238,38 @@ def test_referer_falls_back_to_site_url(monkeypatch=None):
 def test_default_referer_matches_the_registered_domain():
     """アプリ登録の Allowed websites は uchinoko-size.com。ここがずれると403になる。"""
     assert "uchinoko-size.com" in DEFAULT_REFERER
+
+
+def test_origin_is_derived_from_referer():
+    """Referer だけでは 403 になる。Origin も必要（2026-08-30 に実測で確定）。"""
+    assert _origin_of("https://uchinoko-size.com/") == "https://uchinoko-size.com"
+    assert _origin_of("https://uchinoko-size.com/size/chihuahua/") == "https://uchinoko-size.com"
+    assert _origin_of("http://example.com/a/b") == "http://example.com"
+
+
+def test_both_referer_and_origin_headers_are_sent():
+    """ここが欠けると全リクエストが 403 になる。実装の中心。"""
+    sent = {}
+
+    class FakeReq:
+        def __init__(self, url, headers=None):
+            sent.update(headers or {})
+
+    import urllib.request as ur
+    real_req, real_open = ur.Request, ur.urlopen
+
+    class FakeRes:
+        status = 200
+        def read(self): return b'{"Items":[]}'
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    ur.Request = FakeReq
+    ur.urlopen = lambda req, timeout=None: FakeRes()
+    try:
+        _default_fetch("https://example.com/api", "https://uchinoko-size.com/")
+    finally:
+        ur.Request, ur.urlopen = real_req, real_open
+
+    assert sent.get("Referer") == "https://uchinoko-size.com/"
+    assert sent.get("Origin") == "https://uchinoko-size.com"

@@ -14,10 +14,17 @@
   RAKUTEN_APP_ID / RAKUTEN_ACCESS_KEY / RAKUTEN_AFFILIATE_ID を環境変数から読む。
   コードにもリポジトリにも書かない（引継書 第34項）。
 
-Referer が必須:
-  楽天APIは Referer ヘッダを見て、アプリ登録時の Allowed websites と照合する。
-  付けないと 403 REQUEST_CONTEXT_BODY_HTTP_REFERRER_MISSING で全リクエストが落ちる。
-  登録値は uchinoko-size.com / *.uchinoko-size.com なので、そのURLを送る。
+Referer と Origin の両方が必須:
+  楽天APIはアプリ登録時の Allowed websites と照合するため、この2つを見る。
+  GitHub Actions 上で6パターンを実測した結果（2026-08-30）:
+
+    ヘッダなし                 -> 403 REQUEST_CONTEXT_BODY_HTTP_REFERRER_MISSING
+    Referer のみ               -> 403 同上
+    Referer + ブラウザ風UA      -> 403 同上
+    Referer + Origin           -> 200 （count=187062）
+
+  Referer だけでは通らない。Origin を併せて送ってはじめて通る。
+  Referer はパス付き（末尾スラッシュ）、Origin はスキーム+ホストのみ。
 """
 
 from __future__ import annotations
@@ -66,11 +73,19 @@ class Item:
         return bool(self.affiliate_url) and self.price > 0
 
 
+def _origin_of(referer: str) -> str:
+    """Referer から Origin を作る。スキームとホストだけの形にする。"""
+    parts = urllib.parse.urlsplit(referer)
+    return f"{parts.scheme}://{parts.netloc}"
+
+
 def _default_fetch(url: str, referer: str = DEFAULT_REFERER,
                    timeout: float = 15.0) -> tuple[int, str]:
     req = urllib.request.Request(url, headers={
         "User-Agent": "uchinoko-size/1.0",
-        "Referer": referer,          # 楽天APIの必須ヘッダ
+        # この2つは両方必須。片方だけだと 403 になる（上の実測結果を参照）
+        "Referer": referer,
+        "Origin": _origin_of(referer),
     })
     try:
         with urllib.request.urlopen(req, timeout=timeout) as res:

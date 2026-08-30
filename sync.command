@@ -8,6 +8,7 @@ fail () { echo; echo "!! $1"; echo; read -p "Enterキーで閉じます " _; exi
 rm -f .git/index.lock
 find .git/objects -name 'tmp_obj_*' -delete 2>/dev/null
 rm -f data/*.db data/*.db-journal data/*.db-wal data/*.db-shm 2>/dev/null
+rm -f tools/diag_rakuten.py 2>/dev/null   # 役目を終えた一時ファイル
 
 REPO="munaggggg-ctrl/uchinoko-size"
 [ -f .token ] || fail ".token がありません。チャットで「同期したい」とお伝えください"
