@@ -51,6 +51,7 @@ jobs:
           WP_URL:      ${{ secrets.WP_URL }}
           WP_USER:     ${{ secrets.WP_USER }}
           WP_APP_PASS: ${{ secrets.WP_APP_PASS }}
+          PUBLISH_STATUS: "draft"   # 自動公開に切り替えるのは動作を見てから
         run: python3 -m pipeline.publish
 
       - name: DBの差分をコミット

@@ -141,3 +141,91 @@ def test_weight_only_article_says_so():
 def test_fully_measured_article_has_no_such_caveat():
     body = weight_article(2.8, FITS).body
     assert "体重だけを手がかりにした比較" not in body
+
+
+# =====================================================================
+# 採寸ガイド
+# =====================================================================
+
+from pipeline.article import BasisSurvey, measuring_guide_article  # noqa: E402
+
+SURVEY = BasisSurvey(
+    dog_fit_brands=["CALULU", "VERY-PET", "monchéri", "DOGBASE YOKOHAMA",
+                    "犬と生活 L.W.D.", "ポンポリース"],
+    garment_brands=["IDOG&ICAT", "キミノフク。"],
+    unknown_brands=[],
+)
+GUIDE_SOURCES = [
+    Source("CALULU", "https://www.calulu-dogwear.jp/user_data/dogwearsize", "2026-08-29"),
+    Source("IDOG&ICAT", "https://www.idog.jp/blog/sizepage/", "2026-08-29"),
+]
+QUOTES = [
+    ("CALULU", "当サイトに掲載のサイズ表は、ワンちゃんのボディサイズです。"),
+    ("IDOG&ICAT", "サイズ表の数字は全てお洋服の仕上り寸法となっております。"),
+]
+
+
+def test_measuring_guide_passes_lint():
+    a = measuring_guide_article(SURVEY, GUIDE_SOURCES, QUOTES)
+    assert lint(a.body) == [], [f.rule for f in lint(a.body)]
+
+
+def test_measuring_guide_refuses_without_survey_data():
+    """採寸方法の説明だけなら、どのブランドのサイトにも書いてある。
+    横断調査という独自部分がないなら、記事を作らせない。"""
+    empty = BasisSurvey([], [], [])
+    try:
+        measuring_guide_article(empty, GUIDE_SOURCES)
+    except ValueError as e:
+        assert "横断調査" in str(e)
+    else:
+        raise AssertionError("独自データのない薄い記事を作ってはいけない")
+
+
+def test_survey_numbers_appear_in_the_text():
+    body = measuring_guide_article(SURVEY, GUIDE_SOURCES).body
+    assert "8社" in body, "調べた社数を明記する"
+    assert "6社" in body and "2社" in body
+
+
+def test_official_quotes_are_shown_verbatim():
+    body = measuring_guide_article(SURVEY, GUIDE_SOURCES, QUOTES).body
+    assert "ワンちゃんのボディサイズです" in body
+    assert "お洋服の仕上り寸法" in body
+
+
+def test_all_three_measurements_are_explained():
+    body = measuring_guide_article(SURVEY, GUIDE_SOURCES).body
+    for k in ("首回り", "胴回り", "着丈", "前足の付け根", "しっぽの付け根"):
+        assert k in body
+
+
+def test_ease_figures_are_attributed():
+    """あき量は当サイトの当て推量ではなく、出典のある数字であることを本文で示す。"""
+    body = measuring_guide_article(SURVEY, GUIDE_SOURCES).body
+    assert "milla milla" in body
+    assert "2〜3cm" in body and "4〜5cm" in body
+
+
+def test_unknown_brands_row_is_omitted_when_empty():
+    body = measuring_guide_article(SURVEY, GUIDE_SOURCES).body
+    assert "公式に明記なし" not in body
+
+
+def test_unknown_brands_row_is_shown_when_present():
+    """基準が不明なブランドがあることも隠さない。"""
+    s = BasisSurvey(["A"], ["B"], ["CRAZYBOO"])
+    body = measuring_guide_article(s, GUIDE_SOURCES).body
+    assert "公式に明記なし" in body and "CRAZYBOO" in body
+
+
+def test_guide_slug_and_title():
+    a = measuring_guide_article(SURVEY, GUIDE_SOURCES)
+    assert a.slug == "how-to-measure-dog"
+    assert "測り方" in a.title
+
+
+def test_brand_names_in_survey_are_escaped():
+    s = BasisSurvey(["<b>X</b>"], ["Y"], [])
+    body = measuring_guide_article(s, GUIDE_SOURCES).body
+    assert "<b>X</b>" not in body and "&lt;b&gt;" in body

@@ -48,6 +48,8 @@ pipeline/normalize.py  サイズ表の正規化。実寸表記を犬の適合レ
 pipeline/collect.py    公式サイズ表の読み取り（画像入力対応）。検証を通らない抽出は保存しない
 pipeline/query.py      DB読み出し。SQLに触るのはここだけ
 pipeline/rakuten.py    楽天APIクライアント。購入リンクと価格のみ取得する
+pipeline/article.py    記事の組み立て。LLMを使わずテンプレートで組む
+pipeline/publish.py    WordPress REST API への投稿。既定は下書き
 pipeline/lint.py       公開前の校閲。ERROR があれば公開を止める
 tests/run.py           テストランナー（pytest不要）
 .github/workflows/     日次パイプラインと週次レポート
@@ -56,7 +58,7 @@ tests/run.py           テストランナー（pytest不要）
 ## 動かす
 
 ```bash
-python3 tests/run.py              # 111件のテスト
+python3 tests/run.py              # 153件のテスト
 python3 -m pipeline.lint FILE     # 校閲。終了コード1で公開中止
 ```
 

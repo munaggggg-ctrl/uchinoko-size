@@ -184,3 +184,131 @@ def weight_article(weight: float,
              "購入前に各商品ページのサイズ表をご確認ください。</p>")
 
     return Article(title=title, slug=slug, body="\n".join(p), sources=srcs)
+
+
+# =====================================================================
+# 採寸ガイド
+#
+# なぜこの記事を最初の柱にするか:
+#   飼い主が知っているのは体重だけで、胴回りを測ったことがある人は少ない。
+#   つまり全ての導線の手前に「測る」という段差がある。ここを取らないと、
+#   サイズ比較のページに来ても入力できずに離脱する。
+#
+# 薄い記事にしないために:
+#   採寸方法の説明そのものは、どのブランドのサイトにも書いてある。
+#   当サイトが足せるのは「ブランドによって、その数字の意味が違う」という
+#   横断調査の結果である。これは1社だけを見ていては書けない。
+#   その調査結果を本文に含めることを、この関数の必須条件とする。
+# =====================================================================
+
+@dataclass
+class BasisSurvey:
+    """サイズ表の基準を、実際に調べた結果。推測ではなく調査した数のみを入れる。"""
+    dog_fit_brands: list[str]      # 犬の体のサイズで表記しているブランド
+    garment_brands: list[str]      # 服の実寸で表記しているブランド
+    unknown_brands: list[str]      # 公式に明記がなく、判定できなかったブランド
+
+    @property
+    def total(self) -> int:
+        return len(self.dog_fit_brands) + len(self.garment_brands) + len(self.unknown_brands)
+
+
+def measuring_guide_article(survey: BasisSurvey,
+                            sources: Sequence[Source],
+                            quotes: Sequence[tuple[str, str]] = ()) -> Article:
+    """「犬の採寸ガイド」記事。
+
+    quotes は (ブランド名, 公式ページの原文) の組。基準の違いを示す根拠として載せる。
+    調査結果が無い状態では、他所と同じ薄い記事になってしまうので、
+    survey が空なら組み立てを拒否する。
+    """
+    if survey.total == 0:
+        raise ValueError(
+            "横断調査の結果がないまま採寸ガイドを組み立てない。"
+            "採寸方法の説明だけでは、どこにでもある記事にしかならない。")
+
+    title = "犬の首回り・胴回り・着丈の測り方｜ブランドで意味が違う点に注意"
+    slug = "how-to-measure-dog"
+    p: list[str] = []
+
+    p.append(
+        f"<p>犬服やハーネスのサイズ選びで失敗する原因の多くは、"
+        f"体重だけで選んでしまうことにあります。ここでは首回り・胴回り・着丈の測り方と、"
+        f"<strong>測った数字をブランドのサイズ表とどう照らし合わせるか</strong>を説明します。</p>")
+
+    # --- 測り方 ---
+    p.append("<h2>測る前に用意するもの</h2>")
+    p.append(
+        "<p>やわらかいメジャー（洋裁用のもの）を使います。金属の巻尺だと体に沿わず、"
+        "数cm変わります。手元にない場合は、ひもを体に回して印を付け、"
+        "あとから定規で測っても構いません。</p>"
+        "<p>犬が立っている状態で測ります。座らせると胴回りが変わります。</p>")
+
+    p.append("<h2>3か所の測り方</h2>")
+    p.append(
+        "<h3>1. 首回り</h3>"
+        "<p>首輪をつける位置を、ひと回りします。喉の下のいちばん細い部分ではなく、"
+        "首の付け根寄りです。</p>"
+        "<h3>2. 胴回り</h3>"
+        "<p>前足の付け根のすぐ後ろを通して、胴のいちばん太いところをひと回りします。"
+        "<strong>3か所のうち、サイズ選びをいちばん左右するのがここです。</strong></p>"
+        "<h3>3. 着丈（背丈）</h3>"
+        "<p>首の付け根から、しっぽの付け根までの長さです。首輪の位置から測り始めます。</p>"
+        "<p>いずれも、指が1本入る程度のゆとりを持たせて当ててください。"
+        "きつく締めて測ると、実際より小さい数字になります。</p>")
+
+    # --- ここが独自部分 ---
+    p.append("<h2>測った数字を、そのまま比べてはいけない</h2>")
+    p.append(
+        f"<p>当サイトで小型犬向けブランド{survey.total}社の公式サイズ表を調べたところ、"
+        f"<strong>サイズ表の数字が何を指しているかがブランドによって違いました。</strong></p>")
+
+    p.append('<div class="tw"><table>')
+    p.append("<thead><tr><th>サイズ表の数字が指すもの</th><th>社数</th><th>ブランド</th></tr></thead><tbody>")
+    rows = [("犬の体のサイズ", survey.dog_fit_brands),
+            ("服そのものの寸法（実寸）", survey.garment_brands),
+            ("公式に明記なし", survey.unknown_brands)]
+    for label, brands in rows:
+        if not brands:
+            continue
+        p.append(f"<tr><th>{e(label)}</th><td>{len(brands)}社</td>"
+                 f"<td>{e('、'.join(brands))}</td></tr>")
+    p.append("</tbody></table></div>")
+
+    if quotes:
+        p.append("<p>各社の公式ページには、次のように書かれています。</p><ul>")
+        for brand, quote in quotes:
+            p.append(f"<li><strong>{e(brand)}</strong>：「{e(quote)}」</li>")
+        p.append("</ul>")
+
+    p.append(
+        "<p><strong>この違いを知らないと、同じ数字を見ているのに逆の結論になります。</strong>"
+        "「服の実寸」で書かれた表に、測った胴回りをそのまま当てはめると、"
+        "ゆとりがゼロの服を選ぶことになり、着られません。</p>"
+        "<p>「服の実寸」表記のブランドでは、測った数字より数cm大きいサイズを選ぶ必要があります。"
+        "犬服の型紙販売元 milla milla が公開している推奨あき量では、小型犬の場合、"
+        '<span data-prov="official">ニット生地で胴回り2〜3cm・首回り2cm、'
+        '伸びない生地で胴回り4〜5cm・首回り2〜3cm</span>とされています。</p>')
+
+    p.append("<h2>測ったあとにすること</h2>")
+    p.append(
+        "<p>3か所の数字が出たら、メモに残しておいてください。"
+        "買い物のたびに測り直す必要はありません（成長期の子犬を除く）。</p>"
+        "<p>当サイトのサイズ比較では、この3つの数字を入れると、"
+        "ブランドごとの推奨サイズを表記の違いを補正したうえで並べて表示します。</p>")
+
+    # --- 出典 ---
+    p.append("<h2>出典</h2><ul>")
+    seen, srcs = set(), []
+    for s_ in sources:
+        if s_.url not in seen:
+            seen.add(s_.url); srcs.append(s_)
+    for s_ in srcs:
+        p.append(f'<li>{e(s_.brand)}：<a href="{e(s_.url)}" rel="nofollow noopener" '
+                 f'target="_blank">公式サイズ表</a>（{e(s_.fetched_at)} 取得）</li>')
+    p.append('<li>milla milla：<a href="https://www.millamilla.jp/first/'
+             '%E3%82%B5%E3%82%A4%E3%82%BA%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6/" '
+             'rel="nofollow noopener" target="_blank">サイズについて【犬用】</a>（2026-08-29 取得）</li>')
+    p.append("</ul>")
+
+    return Article(title=title, slug=slug, body="\n".join(p), sources=srcs)

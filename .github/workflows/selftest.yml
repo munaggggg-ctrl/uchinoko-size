@@ -27,3 +27,11 @@ jobs:
           RAKUTEN_AFFILIATE_ID: ${{ secrets.RAKUTEN_AFFILIATE_ID }}
           WP_URL:               ${{ secrets.WP_URL }}   # Referer に使う
         run: python3 -m pipeline.rakuten
+
+      - name: WordPress REST API の疎通確認
+        # WP_APP_PASS 未登録のうちは publish 側が黙ってスキップする
+        env:
+          WP_URL:      ${{ secrets.WP_URL }}
+          WP_USER:     ${{ secrets.WP_USER }}
+          WP_APP_PASS: ${{ secrets.WP_APP_PASS }}
+        run: python3 -m pipeline.publish

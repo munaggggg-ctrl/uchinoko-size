@@ -11,8 +11,9 @@
 | `RAKUTEN_ACCESS_KEY` | 楽天APIの認証キー | **秘密**。漏れたらアプリ管理ページで再発行 |
 | `RAKUTEN_AFFILIATE_ID` | 成果計上用。リンクに含まれる | 公開情報 |
 | `WP_URL` | `https://uchinoko-size.com` | 公開情報 |
-| `WP_USER` | WordPress の管理ユーザー名 | 準公開 |
-| `WP_APP_PASS` | WordPress のアプリケーションパスワード | **秘密**。管理画面からいつでも失効できる |
+| `WP_USER` | WordPress の管理ユーザー名（`munaggggg@gmail.com`） | 準公開 |
+| `WP_APP_PASS` | WordPress のアプリケーションパスワード（`claude-automation`） | **秘密**。管理画面からいつでも失効できる |
+| `WP_REST_STYLE` | 省略可。`query` にすると `?rest_route=` 形式を最初から使う。通常は自動判定に任せる | 公開情報 |
 | `GEMINI_API_KEY` | サイズ表の読み取り（画像入力を含む）。無料枠 | **秘密**。Google AI Studio で再発行可 |
 
 ## Phase 1 後半で追加
@@ -30,3 +31,17 @@
 - DB接続情報（DB名・DBユーザー・DBパスワード）は **使わない**。
   自動化は WordPress REST API 経由でのみ行う。
 - 鍵を再発行したら、GitHub Secrets の値も同時に差し替える。
+
+
+## WordPress のアプリケーションパスワードの作り方
+
+サイトが正常に表示されるようになってから、CEOに1回だけお願いする作業。
+
+1. https://uchinoko-size.com/wp-admin/ にログイン
+2. 左メニュー **ユーザー → プロフィール**
+3. 下までスクロールして **アプリケーションパスワード**
+4. 名前に `uchinoko-bot` と入れて **新しいアプリケーションパスワードを追加**
+5. 表示された文字列（空白区切り）をコピー
+
+管理者パスワードそのものは渡さない。アプリケーションパスワードは
+この画面からいつでも失効できる。
