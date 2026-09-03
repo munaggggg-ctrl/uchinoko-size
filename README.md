@@ -92,11 +92,29 @@ PY
 
 理由のない抑制は抑制として扱わない。
 
+## 診断ツール（サイトの中核ページ）
+
+`pipeline/toolpage.py` が、DBから1枚の固定ページを組み立てる。記事ではなく道具なので、
+同じ slug（`size-checker`）を上書きし続ける。
+
+```bash
+python3 -m pipeline.build_db            # schema + seed から data/real.db を作る
+python3 -m pipeline.toolpage build/tool.html
+python3 -m pipeline.lint build/tool.html
+python3 -m pipeline.publish --check     # WordPress への疎通確認だけ
+python3 -m pipeline.publish             # 固定ページを下書きとして上書き
+```
+
+設計上の要点:
+
+- 正規化（服の実寸 → 犬の適合レンジ）は Python 側で済ませてから配信する。
+  ゆとり値の定義がブラウザ側にも散らばるのを防ぐ。
+- ブラウザが持つのは採点だけで、式は `sizing.py` と同じ。
+- 配信するすべての行に provenance が付く。付いていない行は配信しない。
+- 出典の `note` からは公式の原文引用だけを抜き出す。社内の判断メモは公開しない。
+
 ## まだ無いもの（Day 8 以降）
 
-- `pipeline/collect.py` — ブランド公式サイズ表の取得と構造化（Gemini 無料枠）
-- `pipeline/draft.py` — 記事下書き（Claude Haiku + Batch API）
-- `pipeline/publish.py` — WordPress REST API への投稿
+- `pipeline/collect.py` — ブランド公式サイズ表の取得と構造化（Gemini 無料枠。キー未取得）
+- `pipeline/draft.py` — 記事下書き
 - `pipeline/weekly_report.py` — 日曜のCEOレポート
-
-いずれも、アカウントとAPIキーが揃ってから実装する。

@@ -20,6 +20,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -152,17 +153,20 @@ class WordPress:
 
         raise PublishError(f"リトライ上限に達しました。{last}")
 
-    def find_by_slug(self, slug: str) -> Optional[dict]:
+    def find_by_slug(self, slug: str, endpoint: str = "posts") -> Optional[dict]:
         """同じ slug の記事を探す。重複記事を作らないために必ず先に引く。"""
         q = urllib.parse.urlencode({"slug": slug, "status": "any", "per_page": 1})
-        _, data = self._call(f"/posts?{q}")
+        _, data = self._call(f"/{endpoint}?{q}")
         if isinstance(data, list) and data:
             return data[0]
         return None
 
     # --- 公開 -------------------------------------------------------
 
-    def publish(self, article: Article, status: Optional[str] = None) -> Published:
+    def publish(self, article: Article, status: Optional[str] = None,
+                endpoint: str = "posts") -> Published:
+        """endpoint="pages" にすると固定ページとして出す。
+        診断ツールは記事ではなく道具なので、1枚の固定ページを上書きし続ける。"""
         problems = [f for f in lint(article.body) if f.severity == ERROR]
         if problems:
             raise LintFailed(
@@ -177,12 +181,12 @@ class WordPress:
             "status": status,
         }
 
-        existing = self.find_by_slug(article.slug)
+        existing = self.find_by_slug(article.slug, endpoint)
         if existing:
-            _, data = self._call(f"/posts/{existing['id']}", "POST", body)
+            _, data = self._call(f"/{endpoint}/{existing['id']}", "POST", body)
             created = False
         else:
-            _, data = self._call("/posts", "POST", body)
+            _, data = self._call(f"/{endpoint}", "POST", body)
             created = True
 
         return Published(post_id=int(data["id"]),
@@ -205,11 +209,37 @@ def selftest() -> int:
     return 0
 
 
-def main() -> int:
+def publish_tool_page(wp: "WordPress") -> int:
+    """診断ツールの固定ページを1枚、同じ slug に上書きし続ける。"""
+    from .toolpage import ToolPageError, build_tool_page
+    try:
+        article = build_tool_page()
+    except ToolPageError as e:
+        print(f"NG: 診断ページを組み立てられません: {e}")
+        return 1
+    try:
+        res = wp.publish(article, endpoint="pages")
+    except LintFailed as e:
+        print(f"NG: {e}")
+        return 1
+    except PublishError as e:
+        print(f"NG: {e}")
+        return 1
+    verb = "作成" if res.created else "更新"
+    print(f"publish: 固定ページを{verb}しました id={res.post_id} status={res.status}")
+    print(f"    {res.url}")
+    return 0
+
+
+def main(argv: Optional[list] = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
     if not os.environ.get("WP_APP_PASS"):
         print("publish: WP_APP_PASS が未設定のため、投稿をスキップしました。")
         return 0
-    return selftest()
+    rc = selftest()
+    if rc != 0 or "--check" in argv:
+        return rc
+    return publish_tool_page(WordPress())
 
 
 if __name__ == "__main__":
