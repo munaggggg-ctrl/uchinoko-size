@@ -337,8 +337,24 @@ def _payload(charts: list[dict]) -> dict:
     } for c in charts]}
 
 
+def _oneline(code: str) -> str:
+    """改行を潰して1行にする。
+
+    WordPress の wpautop は本文の空行を </p><p> に置き換える。それが <script> の
+    中にも入り込み、JavaScript が構文エラーで丸ごと止まる。実際に一度これで壊した。
+    ブロック（wp:html）で包むことでも回避できるが、テーマやプラグインの構成に
+    依存させたくないので、そもそも壊される材料（改行）を残さない。
+    行コメント（//）があると1行化で後続が全部コメントになるため、混入を禁じる。
+    """
+    if re.search(r"(?<!:)//", code):
+        raise ToolPageError("配信するコードに行コメント（//）が含まれています")
+    return " ".join(line.strip() for line in code.splitlines() if line.strip())
+
+
 def render_page(charts: list[dict], sources: list[dict]) -> str:
     data = json.dumps(_payload(charts), ensure_ascii=False, separators=(",", ":"))
+    css = _oneline(CSS)
+    engine = _oneline(ENGINE)
     n_brand = len({c["brand"] for c in charts})
     n_row = sum(len(c["rows"]) for c in charts)
 
@@ -349,8 +365,9 @@ def render_page(charts: list[dict], sources: list[dict]) -> str:
         + f'<span class="meta">取得 {e(s["fetched_at"])}</span></li>'
         for s in sources)
 
-    return f"""<div class="ucs">
-<style>{CSS}</style>
+    return f"""<!-- wp:html -->
+<div class="ucs">
+<style>{css}</style>
 
 <p>うちの子の実測値を入れると、{n_brand}ブランドの公式サイズ表を横断して、
 それぞれどのサイズの適合範囲に入るかを表示します。
@@ -397,8 +414,9 @@ def render_page(charts: list[dict], sources: list[dict]) -> str:
 </ul>
 
 <script type="application/json" id="ucs-data">{data}</script>
-<script>{ENGINE}</script>
-</div>"""
+<script>{engine}</script>
+</div>
+<!-- /wp:html -->"""
 
 
 def build_tool_page(db_path: Optional[Path] = None) -> Article:

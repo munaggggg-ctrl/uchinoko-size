@@ -107,3 +107,28 @@ def test_refuses_to_render_without_sources():
     finally:
         con.close()
     raise AssertionError("空のDBからページを作ろうとして止まらなかった")
+
+
+def test_no_blank_lines_inside_script_or_style():
+    """wpautop が </p><p> を差し込む材料（改行）を、配信コードに残さない。"""
+    art = build_tool_page(_db())
+    for tag in ("script", "style"):
+        for m in re.finditer(rf"<{tag}[^>]*>(.*?)</{tag}>", art.body, re.S):
+            assert "\n" not in m.group(1), tag
+
+
+def test_wrapped_in_html_block():
+    """ブロックとして保存されると wpautop が外れる。二重の保険。"""
+    art = build_tool_page(_db())
+    assert art.body.startswith("<!-- wp:html -->")
+    assert art.body.rstrip().endswith("<!-- /wp:html -->")
+
+
+def test_line_comments_are_rejected():
+    """1行化でコードが丸ごとコメントアウトされる事故を止める。"""
+    from pipeline.toolpage import ToolPageError, _oneline
+    try:
+        _oneline("var a=1; // memo\nvar b=2;")
+    except ToolPageError:
+        return
+    raise AssertionError("行コメントを含むコードが素通りした")
