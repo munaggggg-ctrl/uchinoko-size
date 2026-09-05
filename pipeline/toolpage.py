@@ -25,7 +25,7 @@ from typing import Optional
 from .article import Article, Source
 from .normalize import normalize_ranges
 
-TITLE = "犬服のサイズ診断｜8ブランドの公式サイズ表を横断して調べる"
+TITLE_TMPL = "犬服のサイズ診断｜{n}ブランドの公式サイズ表を横断して調べる"
 SLUG = "size-checker"
 
 QUOTE = re.compile(r"原文[:：]\s*[「\"](.+?)[」\"]")
@@ -435,8 +435,9 @@ def build_tool_page(db_path: Optional[Path] = None) -> Article:
     if not sources:
         raise ToolPageError("出典が1件もありません。出典なしのページは公開しません")
 
+    n_brand = len({c["brand"] for c in charts})
     return Article(
-        title=TITLE,
+        title=TITLE_TMPL.format(n=n_brand),
         slug=SLUG,
         body=render_page(charts, sources),
         sources=[Source(brand=s["brand"], url=s["url"], fetched_at=s["fetched_at"])

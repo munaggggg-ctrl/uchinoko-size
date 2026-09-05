@@ -58,7 +58,7 @@ tests/run.py           テストランナー（pytest不要）
 ## 動かす
 
 ```bash
-python3 tests/run.py              # 153件のテスト
+python3 tests/run.py              # テスト
 python3 -m pipeline.lint FILE     # 校閲。終了コード1で公開中止
 ```
 

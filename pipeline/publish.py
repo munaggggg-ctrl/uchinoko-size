@@ -178,15 +178,22 @@ class WordPress:
             "title": article.title,
             "slug": article.slug,
             "content": article.body,
-            "status": status,
         }
 
         existing = self.find_by_slug(article.slug, endpoint)
         if existing:
+            # 公開状態は一方向にしか動かさない。
+            #   下書き → 公開 : PUBLISH_STATUS=publish を明示したときだけ昇格する
+            #   公開 → 下書き : 決してしない
+            # 人が「公開」にしたものを更新のたびに下書きへ戻すと、ページが消える
+            # （実際に一度これで公開中のページを404にした）。
+            if status == "publish" and existing.get("status") != "publish":
+                body = dict(body, status="publish")
             _, data = self._call(f"/{endpoint}/{existing['id']}", "POST", body)
             created = False
         else:
-            _, data = self._call(f"/{endpoint}", "POST", body)
+            # 新規作成のときだけ状態を決める。既定は下書き
+            _, data = self._call(f"/{endpoint}", "POST", dict(body, status=status))
             created = True
 
         return Published(post_id=int(data["id"]),
@@ -231,6 +238,28 @@ def publish_tool_page(wp: "WordPress") -> int:
     return 0
 
 
+def publish_articles(wp: "WordPress") -> int:
+    """記事を投稿として出す。固定ページ（道具）とは別物なので endpoint を分ける。"""
+    from .draft import DraftError, build_all
+    try:
+        articles = build_all()
+    except DraftError as e:
+        print(f"NG: 記事を組み立てられません: {e}")
+        return 1
+
+    failed = 0
+    for a in articles:
+        try:
+            res = wp.publish(a, endpoint="posts")
+        except PublishError as e:
+            print(f"NG: {a.slug}: {e}")
+            failed += 1
+            continue
+        verb = "作成" if res.created else "更新"
+        print(f"publish: 記事を{verb} id={res.post_id} status={res.status} {a.slug}")
+    return 1 if failed else 0
+
+
 def main(argv: Optional[list] = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if not os.environ.get("WP_APP_PASS"):
@@ -239,7 +268,9 @@ def main(argv: Optional[list] = None) -> int:
     rc = selftest()
     if rc != 0 or "--check" in argv:
         return rc
-    return publish_tool_page(WordPress())
+    wp = WordPress()
+    rc = publish_tool_page(wp)
+    return publish_articles(wp) or rc
 
 
 if __name__ == "__main__":

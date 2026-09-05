@@ -213,7 +213,14 @@ class GeminiExtractor:
         self._fetch = fetch
         self._sleep = sleep
         self._clock = clock
+        # 件数の上限。1呼び出しあたりのトークン量は画像の有無で数十倍違うので、
+        # 件数だけでは費用の上限にならない。トークン側の上限も併せて持つ。
         self.daily_cap = int(os.environ.get("COLLECT_DAILY_CAP", daily_cap))
+        # 引継書 第30項「コスト暴走防止」を実際に効かせるための上限。
+        # ワークフローが渡しているのは DAILY_TOKEN_CAP。以前はこの名前を読んでおらず、
+        # かつ数えていたのが件数だったため、上限として機能していなかった。
+        self.token_cap = int(os.environ.get("DAILY_TOKEN_CAP", "0") or 0)
+        self.tokens_used = 0
         self.calls = 0
         self._last_call_at: Optional[float] = None
 
@@ -239,6 +246,8 @@ class GeminiExtractor:
                 "responseMimeType": "application/json",
                 "responseSchema": RESPONSE_SCHEMA,
                 "temperature": 0,     # 読み取り作業なので揺らがせない
+                # 出力が暴走したときの保険。サイズ表1枚はこの枠に十分収まる
+                "maxOutputTokens": 4096,
             },
         }).encode("utf-8")
 
@@ -249,6 +258,10 @@ class GeminiExtractor:
             raise CollectError("テキストか画像のどちらかが必要です")
         if self.calls >= self.daily_cap:
             raise QuotaExceeded(f"収集の日次上限 {self.daily_cap} 件に達したため停止しました。")
+        if self.token_cap and self.tokens_used >= self.token_cap:
+            raise QuotaExceeded(
+                f"収集の日次トークン上限 {self.token_cap} に達したため停止しました"
+                f"（消費 {self.tokens_used}）。")
 
         url = f"{API_BASE}/{self.model}:generateContent?key={self.api_key}"
         body = self._body(text, image)
@@ -261,6 +274,7 @@ class GeminiExtractor:
             self.calls += 1
 
             if status == 200:
+                self.tokens_used += self._tokens_of(raw)
                 return Extraction.from_dict(self._parse(raw))
 
             if status == 429 or 500 <= status < 600:
@@ -272,6 +286,16 @@ class GeminiExtractor:
             raise CollectError(f"HTTP {status}: {raw[:300]}")
 
         raise CollectError(f"リトライ上限に達しました。{last}")
+
+    @staticmethod
+    def _tokens_of(raw: str) -> int:
+        """応答から実消費トークンを読む。読めなければ0（上限判定を甘くしない
+        ために、読めないこと自体は例外にせず、件数上限側で守る）。"""
+        try:
+            meta = json.loads(raw).get("usageMetadata") or {}
+            return int(meta.get("totalTokenCount") or 0)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return 0
 
     @staticmethod
     def _parse(raw: str) -> dict:

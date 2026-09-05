@@ -238,3 +238,34 @@ def test_404_does_not_loop_forever():
     except PublishError:
         return
     raise AssertionError("404 が続いてもエラーにならなかった")
+
+
+def test_update_does_not_change_published_status():
+    """公開中のページを更新しても下書きに戻さない。一度これで公開中のページを404にした。"""
+    f = Fake((200, json.dumps([{"id": 7, "status": "publish"}])),
+             post(id=7, status="publish"))
+    r = wp(f).publish(ARTICLE, status="draft", endpoint="pages")
+    assert r.created is False
+    assert "status" not in f.calls[1]["body"], f.calls[1]["body"]
+    assert f.calls[1]["url"].endswith("/pages/7")
+
+
+def test_create_uses_the_requested_status():
+    f = Fake((200, "[]"), post(status="draft"))
+    r = wp(f).publish(ARTICLE, status="draft", endpoint="pages")
+    assert r.created is True
+    assert f.calls[1]["body"]["status"] == "draft"
+
+
+def test_draft_is_promoted_to_publish_when_asked():
+    """PUBLISH_STATUS=publish を明示したときだけ、下書きを公開へ昇格させる。"""
+    f = Fake((200, json.dumps([{"id": 7, "status": "draft"}])), post(id=7, status="publish"))
+    wp(f).publish(ARTICLE, status="publish", endpoint="pages")
+    assert f.calls[1]["body"]["status"] == "publish"
+
+
+def test_published_page_is_never_demoted():
+    """公開中のページには、publish を指定しても status を送り直さない。"""
+    f = Fake((200, json.dumps([{"id": 7, "status": "publish"}])), post(id=7, status="publish"))
+    wp(f).publish(ARTICLE, status="publish", endpoint="pages")
+    assert "status" not in f.calls[1]["body"]

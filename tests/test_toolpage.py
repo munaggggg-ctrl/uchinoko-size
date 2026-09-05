@@ -66,7 +66,7 @@ def test_page_has_provenance_markers_and_sources():
     assert 'data-prov="estimated"' in art.body
     assert "出典" in art.body
     assert art.slug == SLUG
-    assert len(art.sources) >= 8
+    assert len(art.sources) >= 10
     for s in art.sources:
         assert s.url.startswith("https://")
         assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", s.fetched_at), s.fetched_at
@@ -78,8 +78,8 @@ def test_embedded_data_is_valid_json_and_complete():
     assert m, "埋め込みデータが見つからない"
     data = json.loads(m.group(1))
     brands = {c["brand"] for c in data["charts"]}
-    assert len(brands) == 8, brands
-    assert sum(len(c["rows"]) for c in data["charts"]) == 66
+    assert len(brands) == 10, brands
+    assert sum(len(c["rows"]) for c in data["charts"]) == 78
 
 
 def test_official_quote_is_shown_and_internal_note_is_not():
@@ -132,3 +132,12 @@ def test_line_comments_are_rejected():
     except ToolPageError:
         return
     raise AssertionError("行コメントを含むコードが素通りした")
+
+
+def test_title_reflects_the_actual_brand_count():
+    """タイトルのブランド数を固定値にしない。本文だけ増えてタイトルが嘘になるのを防ぐ。"""
+    art = build_tool_page(_db())
+    m = re.search(r"(\d+)ブランド", art.title)
+    assert m, art.title
+    data = json.loads(re.search(r'id="ucs-data">(.*?)</script>', art.body, re.S).group(1))
+    assert int(m.group(1)) == len({c["brand"] for c in data["charts"]})

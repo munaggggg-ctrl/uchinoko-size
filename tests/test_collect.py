@@ -275,3 +275,68 @@ def test_non_json_payload_is_reported():
         assert "JSONとして読めません" in str(e)
     else:
         raise AssertionError("JSON以外を黙って通してはいけない")
+
+
+def envelope_with_usage(payload, total_tokens):
+    return json.dumps({
+        "candidates": [{"content": {"parts": [{"text": json.dumps(payload)}]}}],
+        "usageMetadata": {"totalTokenCount": total_tokens},
+    })
+
+
+def test_token_cap_is_read_from_daily_token_cap(monkeypatch=None):
+    """ワークフローが渡している名前は DAILY_TOKEN_CAP。以前は別名を読んでいて効いていなかった。"""
+    import os
+    old = os.environ.get("DAILY_TOKEN_CAP")
+    os.environ["DAILY_TOKEN_CAP"] = "1000"
+    try:
+        c = client(Recorder())
+        assert c.token_cap == 1000
+    finally:
+        if old is None:
+            os.environ.pop("DAILY_TOKEN_CAP", None)
+        else:
+            os.environ["DAILY_TOKEN_CAP"] = old
+
+
+def test_token_cap_stops_further_calls():
+    """件数ではなく実消費トークンで止まること（画像入力は1件でも重い）。"""
+    import os
+    old = os.environ.get("DAILY_TOKEN_CAP")
+    os.environ["DAILY_TOKEN_CAP"] = "500"
+    try:
+        f = Recorder((200, envelope_with_usage(GOOD, 600)))
+        c = client(f)
+        c.extract(text="x")
+        assert c.tokens_used == 600
+        try:
+            c.extract(text="y")
+        except QuotaExceeded as e:
+            assert "トークン" in str(e)
+        else:
+            raise AssertionError("トークン上限を超えても止まらなかった")
+        assert len(f.calls) == 1, "上限超過後にリクエストを出してはいけない"
+    finally:
+        if old is None:
+            os.environ.pop("DAILY_TOKEN_CAP", None)
+        else:
+            os.environ["DAILY_TOKEN_CAP"] = old
+
+
+def test_no_token_cap_means_no_token_limit():
+    import os
+    old = os.environ.pop("DAILY_TOKEN_CAP", None)
+    try:
+        c = client(Recorder((200, envelope_with_usage(GOOD, 9999))))
+        c.extract(text="x")
+        assert c.token_cap == 0
+    finally:
+        if old is not None:
+            os.environ["DAILY_TOKEN_CAP"] = old
+
+
+def test_output_tokens_are_capped():
+    """出力の暴走を止める保険。"""
+    f = Recorder((200, envelope(GOOD)))
+    client(f).extract(text="x")
+    assert f.calls[0][1]["generationConfig"]["maxOutputTokens"] == 4096

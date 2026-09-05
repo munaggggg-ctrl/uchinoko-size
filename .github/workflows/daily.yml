@@ -43,11 +43,9 @@ jobs:
         run: python3 -m pipeline.toolpage build/tool.html
 
       - name: 記事の下書き
+        # LLMを使わないテンプレート生成。APIキーもトークン枠も要らない
         if: hashFiles('pipeline/draft.py') != ''
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          DAILY_TOKEN_CAP:   "150000"
-        run: python3 -m pipeline.draft
+        run: python3 -m pipeline.draft build
 
       - name: 校閲（ERROR があればここで止まる）
         if: hashFiles('build/*.html') != ''

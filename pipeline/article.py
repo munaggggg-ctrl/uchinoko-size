@@ -76,9 +76,13 @@ def _mark(fit: Fit) -> str:
     return f'<span class="mark">{fit.mark}</span>'
 
 
+TOOL_URL = "/size-checker/"
+
+
 def weight_article(weight: float,
                    fits: Sequence[tuple[Fit, Source]],
-                   offers: Sequence[Offer] = ()) -> Article:
+                   offers: Sequence[Offer] = (),
+                   excluded_brands: Sequence[str] = ()) -> Article:
     """「体重◯kgの小型犬に合う犬服サイズ」記事を組み立てる。
 
     fits は (適合判定, 出典) の組。適合度の高い順に並んでいることを前提とする。
@@ -158,6 +162,19 @@ def weight_article(weight: float,
         "<li><strong>着丈</strong>：首の付け根からしっぽの付け根まで</li>"
         "</ol>"
         "<p>メジャーは指が1本入る程度のゆとりを持たせて当ててください。</p>")
+
+    # 測った数値を入れれば、この記事より正確な判定になる。
+    # 記事は入口で、道具が出口。この導線を切らない。
+    p.append(
+        f'<p>測り終えたら、<a href="{TOOL_URL}">サイズ診断</a>に'
+        f'その数値を入れてください。体重だけの比較より判定が絞り込まれます。</p>')
+
+    if excluded_brands:
+        names = "・".join(excluded_brands)
+        p.append(
+            f'<p class="note">{e(names)} は対応体重を公開していないため、'
+            f'上の表には出ていません。胴回りを測れば'
+            f'<a href="{TOOL_URL}">サイズ診断</a>で比較できます。</p>')
 
     # --- 購入導線 ---
     if offers:

@@ -159,3 +159,50 @@ INSERT INTO size_variant
  (8,'4号ロング',8,27,31,42,48,36,36,NULL,NULL,'official',8),
  (8,'5号(LL)' ,9,30,33,47,53,35,35,NULL,NULL,'official',8),
  (8,'5号ロング',10,30,35,47,54,40,40,NULL,NULL,'official',8);
+
+-- ============================================================
+-- 追加分（2026-09-04）
+-- NotebookLM でブランドを洗い出し、サブエージェントが各ブランドの公式ページのみを
+-- 根拠に収集、Claude が原文と数値を再確認したもの。
+-- 取り込まなかったブランドと理由:
+--   RADICA        自社ドメインにサイズ表が無く、モール内ページにしか存在しない
+--   Mandarine Brothers  サイズ表が画像のみで数値がテキスト化されていない
+--   DOG PEACE     表が犬の実測か服の実寸かを明記した一文が公式サイトに無い（basis 不明）
+--   as know as de wan   サイズ表が画像のみ。犬基準と服基準の2系統の定義が併記されている
+-- ============================================================
+
+INSERT INTO source (id, kind, url, title, fetched_at, note) VALUES
+ (9,'brand_official','https://shop.creativeyoko.co.jp/guide/about-size-color',
+    'ペットパラダイス サイズ・カラーについて','2026-09-04T02:00:00+09:00',
+    '原文: 「ペットパラダイスのペットウェアは、首囲、胴囲を基準に、超小型犬用から大型犬用まで11サイズを展開しております。」→ dog_fit_range。着丈は商品ごとに数値が異なるため服の実寸と判断し、着丈は取り込まない（首囲・胴囲・体重のみ）。数値は商品ページ633-35035でClaudeが再確認済み'),
+ (10,'brand_official','https://3arrows.bcart.jp/product.php?id=2332',
+    'スリーアローズ 商品ページのサイズ目安表（自社運営の卸売サイト）','2026-09-04T02:00:00+09:00',
+    '原文: 「※着丈サイズのご注意！ウェアデザインにより首リブを含む・含まずの寸法となっております。」→ garment_actual。列見出しが「背丈(首リブ含まず)」で服の部位を指し、「普段ご着用のウェアと比較の上お選びください」とあることを根拠とする。消費者向けの iampet.com/size は取得できず未検証');
+
+INSERT INTO brand (id, slug, name, official_url, size_policy) VALUES
+ (9,'pet-paradise','PET PARADISE','https://shop.creativeyoko.co.jp/shop/petparadise','首囲・胴囲は犬のボディ基準（公式に明記）。着丈は商品ごとの実寸のため不採用'),
+ (10,'three-arrows','スリーアローズ','https://iampet.com/','服の仕上がり寸法表記。号数表記。対応体重の記載なし');
+
+INSERT INTO size_chart (id, brand_id, category, series, source_id, measure_basis, stretch) VALUES
+ (9,9,'wear','基本サイズ',9,'dog_fit_range',NULL),
+ (10,10,'wear','号数',10,'garment_actual',NULL);
+
+-- PET PARADISE（首囲・胴囲は犬のボディ寸法。着丈は商品ごとに変わるため NULL）
+INSERT INTO size_variant
+ (chart_id,label,sort_order,neck_min,neck_max,chest_min,chest_max,back_min,back_max,weight_min,weight_max,provenance,source_id) VALUES
+ (9,'4S' ,1,15,17,25,28,NULL,NULL,NULL,1.5,'official',9),
+ (9,'3S' ,2,17,20,27,32,NULL,NULL,NULL,3.0,'official',9),
+ (9,'DSS',3,18,22,30,35,NULL,NULL,NULL,3.5,'official',9),
+ (9,'SS' ,4,20,25,34,40,NULL,NULL,NULL,5.0,'official',9),
+ (9,'DS' ,5,22,26,35,41,NULL,NULL,NULL,5.0,'official',9),
+ (9,'S'  ,6,26,30,42,48,NULL,NULL,NULL,8.0,'official',9);
+
+-- スリーアローズ（服の仕上がり寸法。小型犬帯の1〜5号のみ。対応体重の記載なし）
+INSERT INTO size_variant
+ (chart_id,label,sort_order,neck_min,neck_max,chest_min,chest_max,back_min,back_max,weight_min,weight_max,provenance,source_id) VALUES
+ (10,'1号'     ,1,22,24,33,35,22,24,NULL,NULL,'official',10),
+ (10,'2号'     ,2,26,28,37,39,25,27,NULL,NULL,'official',10),
+ (10,'3号'     ,3,29,31,41,43,28,30,NULL,NULL,'official',10),
+ (10,'3号ロング',4,29,31,41,43,31,33,NULL,NULL,'official',10),
+ (10,'4号'     ,5,33,35,45,47,31,33,NULL,NULL,'official',10),
+ (10,'5号'     ,6,35,37,51,53,35,37,NULL,NULL,'official',10);
